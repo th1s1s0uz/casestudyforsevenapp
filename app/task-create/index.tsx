@@ -6,6 +6,7 @@ import { Container } from '@/components/Container';
 import { ScreenTitles } from '@/constants/navigation';
 import { createTask } from '@/queries/tasks';
 import { getAllLists, createList } from '@/queries/lists';
+import { Button } from '@/components/Button';
 
 interface SubTask {
   id: string;
@@ -236,19 +237,13 @@ export default function CreateTaskScreen() {
                   placeholderTextColor="#9ca3af"
                 />
               </View>
-              <TouchableOpacity
+              <Button
+                title="Add"
+                variant="primary"
                 onPress={addSubTask}
                 disabled={!newSubTaskText.trim()}
-                className={`px-6 rounded-2xl items-center justify-center ${newSubTaskText.trim()
-                  ? 'bg-primary-500'
-                  : 'bg-gray-300'
-                  }`}
-              >
-                <Text className={`font-semibold ${newSubTaskText.trim() ? 'text-white' : 'text-gray-500'
-                  }`}>
-                  Add
-                </Text>
-              </TouchableOpacity>
+                className={`px-6 ${!newSubTaskText.trim() ? 'bg-gray-300 border-gray-300' : ''}`}
+              />
             </View>
 
             {subTasks.length > 0 && (
@@ -282,9 +277,9 @@ export default function CreateTaskScreen() {
                     </View>
                     <TouchableOpacity
                       onPress={() => removeSubTask(subTask.id)}
-                      className="ml-2 p-2 bg-accent-red-100 rounded-full"
+                      className="ml-2 p-2 w-20 bg-accent-red-100 items-center justify-center rounded-full"
                     >
-                      <Text className="text-accent-red-600 font-bold text-sm">×</Text>
+                      <Text className="text-accent-red-600 font-bold text-sm">Delete</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -339,29 +334,21 @@ export default function CreateTaskScreen() {
           </View>
 
           <View className="gap-4">
-            <TouchableOpacity
+            <Button
+              title={loading ? "Creating..." : "Create Task"}
+              variant="primary"
               onPress={handleCreateTask}
               disabled={loading || !name.trim()}
-              className={`p-4 rounded-2xl ${loading || !name.trim()
-                ? 'bg-gray-300'
-                : 'bg-primary-500'
-                }`}
-            >
-              <Text className={`text-center font-semibold text-lg ${loading || !name.trim() ? 'text-gray-500' : 'text-white'
-                }`}>
-                {loading ? "Creating..." : "Create Task"}
-              </Text>
-            </TouchableOpacity>
+              className={loading || !name.trim() ? 'bg-gray-300 border-gray-300' : ''}
+            />
 
-            <TouchableOpacity
+            <Button
+              title="Cancel"
+              variant="tertiary"
               onPress={() => router.back()}
               disabled={loading}
-              className="p-4 rounded-2xl bg-gray-200"
-            >
-              <Text className="text-center font-semibold text-lg text-gray-700">
-                Cancel
-              </Text>
-            </TouchableOpacity>
+              className="bg-gray-200 border-gray-200"
+            />
           </View>
         </ScrollView>
       </View>

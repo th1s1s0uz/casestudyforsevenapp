@@ -233,12 +233,12 @@ export default function TaskDetailScreen() {
                 <Text className="text-center text-gray-600 mb-4">
                   The task you're looking for doesn't exist or has been deleted.
                 </Text>
-                <TouchableOpacity
+                <Button
+                  title="Go Back"
+                  variant="primary"
                   onPress={() => router.back()}
-                  className="px-6 py-3 bg-primary-500 rounded-xl"
-                >
-                  <Text className="text-white font-semibold">Go Back</Text>
-                </TouchableOpacity>
+                  className="px-6 py-3"
+                />
               </View>
             ) : (
               <>
@@ -341,49 +341,39 @@ export default function TaskDetailScreen() {
 
                       {hasUnsavedChanges && (
                         <View className="flex-row gap-3 mt-4 pt-3 border-t border-gray-100">
-                          <TouchableOpacity
+                          <Button
+                            title={updating ? "Saving..." : "Save Changes"}
+                            variant="primary"
                             onPress={saveChecklistChanges}
                             disabled={updating}
-                            className={`flex-1 p-3 rounded-xl ${updating ? 'bg-gray-300' : 'bg-accent-green-500'}`}
-                          >
-                            <Text className={`text-center font-semibold ${updating ? 'text-gray-500' : 'text-white'}`}>
-                              {updating ? "Saving..." : "Save Changes"}
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
+                            className={`flex-1 ${updating ? 'bg-gray-300 border-gray-300' : 'bg-accent-green-500 border-accent-green-500'}`}
+                          />
+                          <Button
+                            title="Discard"
+                            variant="tertiary"
                             onPress={discardChecklistChanges}
                             disabled={updating}
-                            className="flex-1 p-3 rounded-xl bg-gray-400"
-                          >
-                            <Text className="text-center font-semibold text-white">Discard</Text>
-                          </TouchableOpacity>
+                            className="flex-1"
+                          />
                         </View>
                       )}
                     </View>
                   </View>
                 )}
                 <View className="gap-4">
-                  <TouchableOpacity
+                  <Button
+                    title={task.is_completed ? "Mark as Pending" : "Mark as Completed"}
+                    variant={task.is_completed ? "secondary" : "primary"}
                     onPress={handleToggleTaskCompletion}
                     disabled={updating}
-                    className={`p-4 rounded-2xl ${updating ? 'bg-gray-300' :
-                      task.is_completed ? 'bg-accent-orange-500' : 'bg-accent-green-500'
-                      }`}
-                  >
-                    <Text className={`text-center font-semibold text-lg ${updating ? 'text-gray-500' : 'text-white'}`}>
-                      {task.is_completed ? "Mark as Pending" : "Mark as Completed"}
-                    </Text>
-                  </TouchableOpacity>
+                  />
 
-                  <TouchableOpacity
+                  <Button
+                    title="Delete Task"
+                    variant="secondary"
                     onPress={handleDeleteTask}
                     disabled={updating}
-                    className={`p-4 rounded-2xl ${updating ? 'bg-gray-300' : 'bg-accent-red-500'}`}
-                  >
-                    <Text className={`text-center font-semibold text-lg ${updating ? 'text-gray-500' : 'text-white'}`}>
-                      Delete Task
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 </View>
               </>
             )}

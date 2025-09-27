@@ -1,10 +1,12 @@
 import { Stack, Link, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo, memo } from 'react';
 import { FlatList, Text, View, ActivityIndicator, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 
 import { Container } from '@/components/Container';
-import { AppRoutes, ScreenTitles, NavigationHelpers } from '@/constants/navigation';
-import { getAllTasks, deleteTask, toggleTaskCompletion } from '@/queries/tasks';
+import { SearchBar } from '@/components/SearchBar';
+import { FilterSection } from '@/components/FilterSection';
+import { ScreenTitles, NavigationHelpers } from '@/constants/navigation';
+import { getAllTasks, deleteTask } from '@/queries/tasks';
 import { Task } from '@/types';
 
 export default function TasksScreen() {
@@ -12,7 +14,9 @@ export default function TasksScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
-  const [toggling, setToggling] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'pending'>('all');
 
   useFocusEffect(
     useCallback(() => {
@@ -24,7 +28,11 @@ export default function TasksScreen() {
     try {
       setLoading(true);
       const data = await getAllTasks();
-      setTasks(data);
+      // Sort tasks by created_at date (newest first)
+      const sortedTasks = data.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setTasks(sortedTasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
       Alert.alert('Error', 'Failed to load tasks. Please try again.');
@@ -37,7 +45,11 @@ export default function TasksScreen() {
     try {
       setRefreshing(true);
       const data = await getAllTasks();
-      setTasks(data);
+      // Sort tasks by created_at date (newest first)
+      const sortedTasks = data.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setTasks(sortedTasks);
     } catch (error) {
       console.error('Error refreshing tasks:', error);
       Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
@@ -73,24 +85,6 @@ export default function TasksScreen() {
     );
   };
 
-  const handleToggleTask = async (taskId: number, currentStatus: boolean) => {
-    try {
-      setToggling(taskId);
-      await toggleTaskCompletion(taskId, !currentStatus);
-      setTasks(prev => prev.map(task => 
-        task.id === taskId 
-          ? { ...task, is_completed: !currentStatus }
-          : task
-      ));
-    } catch (error) {
-      console.error('Error toggling task:', error);
-      Alert.alert('Error', 'Failed to update task. Please try again.');
-    } finally {
-      setToggling(null);
-    }
-  };
-
-
   const parseChecklistFromDescription = (description: string | null) => {
     if (!description) return { description: '', checklist: [] };
     
@@ -122,13 +116,92 @@ export default function TasksScreen() {
     };
   };
 
+  // Filtered tasks based on search and filters
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      // Search filter
+      const matchesSearch = searchQuery === '' || 
+        task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      // Priority filter
+      const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
+      
+      // Status filter
+      const matchesStatus = filterStatus === 'all' || 
+        (filterStatus === 'completed' && task.is_completed) ||
+        (filterStatus === 'pending' && !task.is_completed);
+      
+      return matchesSearch && matchesPriority && matchesStatus;
+    });
+  }, [tasks, searchQuery, filterPriority, filterStatus]);
+
+  // Memoized callback functions to prevent SearchBar re-renders
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchQuery(text);
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchQuery('');
+  }, []);
+
+  const handlePriorityFilter = useCallback((priority: 'all' | 'high' | 'medium' | 'low') => {
+    setFilterPriority(priority);
+  }, []);
+
+  const handleStatusFilter = useCallback((status: 'all' | 'completed' | 'pending') => {
+    setFilterStatus(status);
+  }, []);
+
+  const handleClearAllFilters = useCallback(() => {
+    setSearchQuery('');
+    setFilterPriority('all');
+    setFilterStatus('all');
+  }, []);
+
+  // Memoized ListHeaderComponent to prevent SearchBar re-renders
+  const ListHeaderComponent = useMemo(() => {
+    return () => (
+      <View className="pt-6 pb-6">
+        {/* Search Bar */}
+        <View className="mb-4">
+          <SearchBar
+            value={searchQuery}
+            onChangeText={handleSearchChange}
+            placeholder="Search tasks..."
+            onClear={handleSearchClear}
+          />
+        </View>
+
+        {/* Filter Section */}
+        <FilterSection
+          filterPriority={filterPriority}
+          filterStatus={filterStatus}
+          onPriorityFilter={handlePriorityFilter}
+          onStatusFilter={handleStatusFilter}
+        />
+
+        {/* Create Task Button */}
+        <View className="mb-6">
+          <Link href={NavigationHelpers.getCreateTaskRoute()} asChild>
+            <TouchableOpacity>
+              <View className="p-4 bg-secondary-400 rounded-2xl flex-row items-center justify-center">
+                <Text className="text-white text-lg font-semibold">Create New Task</Text>
+              </View>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </View>
+    );
+  }, [filterPriority, filterStatus, handleSearchChange, handleSearchClear, handlePriorityFilter, handleStatusFilter]);
+
   const renderTaskItem = ({ item }: { item: Task }) => {
     const { description, checklist } = parseChecklistFromDescription(item.description);
     const { icon, name } = parseTaskName(item.name);
     
     return (
       <View className="bg-glass-card mb-4 rounded-2xl border border-gray-100 overflow-hidden">
-        <Link href={`/tasks/${item.id}` as any} asChild>
+        <Link href={NavigationHelpers.getTaskDetailRoute(item.id) as any} asChild>
           <TouchableOpacity 
             className="p-5"
             activeOpacity={0.7}
@@ -189,8 +262,7 @@ export default function TasksScreen() {
         </Link>
         
         <View className="flex-row items-center justify-between px-5 py-3 bg-gray-50 border-t border-gray-100">
-        <Link href={`/tasks/${item.id}` as any} asChild>
-
+        <Link href={NavigationHelpers.getTaskDetailRoute(item.id) as any} asChild>
           <TouchableOpacity className="flex-row items-center">
             <Text className="text-xs font-medium text-primary-600">
               Tap to view details
@@ -226,21 +298,9 @@ export default function TasksScreen() {
       <Stack.Screen options={{ title: ScreenTitles.TASKS, headerShown: false }} />
       <View className="flex-1 bg-primary-50">
         <FlatList
-          data={tasks}
+          data={filteredTasks}
           keyExtractor={(item) => item.id.toString()}
-          ListHeaderComponent={() => (
-            <View className="pt-6 pb-6">
-              <View className="mb-6">
-                <Link href={AppRoutes.CREATE_TASK} asChild>
-                  <TouchableOpacity>
-                    <View className="p-4 bg-secondary-400 rounded-2xl flex-row items-center justify-center">
-                      <Text className="text-white text-lg font-semibold">Create New Task</Text>
-                    </View>
-                  </TouchableOpacity>
-                </Link>
-              </View>
-            </View>
-          )}
+          ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={() => (
             loading ? (
               <View className="p-8 items-center rounded-2xl bg-glass-card border border-gray-200">
@@ -251,19 +311,39 @@ export default function TasksScreen() {
               </View>
             ) : (
               <View className="p-8 items-center rounded-2xl bg-glass-card border border-gray-200">
-                <Text className="mb-2 text-xl font-semibold text-gray-900">
-                  No tasks yet
-                </Text>
-                <Text className="text-center text-gray-600 mb-4">
-                  Create your first task to get organized and boost your productivity!
-                </Text>
-                <Link href={AppRoutes.CREATE_TASK} asChild>
-                  <TouchableOpacity>
-                    <View className="px-6 py-3 bg-white rounded-xl border border-gray-400">
-                      <Text className="text-black font-semibold">Get Started</Text>
-                    </View>
-                  </TouchableOpacity>
-                </Link>
+                {tasks.length === 0 ? (
+                  <>
+                    <Text className="mb-2 text-xl font-semibold text-gray-900">
+                      No tasks yet
+                    </Text>
+                    <Text className="text-center text-gray-600 mb-4">
+                      Create your first task to get organized and boost your productivity!
+                    </Text>
+                    <Link href={NavigationHelpers.getCreateTaskRoute()} asChild>
+                      <TouchableOpacity>
+                        <View className="px-6 py-3 bg-white rounded-xl border border-gray-400">
+                          <Text className="text-black font-semibold">Get Started</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Text className="mb-2 text-xl font-semibold text-gray-900">
+                      No tasks found
+                    </Text>
+                    <Text className="text-center text-gray-600 mb-4">
+                      Try adjusting your search or filter criteria to find what you're looking for.
+                    </Text>
+                    <TouchableOpacity
+                      onPress={handleClearAllFilters}
+                    >
+                      <View className="px-6 py-3 bg-white rounded-xl border border-gray-400">
+                        <Text className="text-black font-semibold">Clear Filters</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             )
           )}

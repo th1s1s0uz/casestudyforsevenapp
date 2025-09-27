@@ -4,14 +4,14 @@
  */
 export const AppRoutes = {
   // Main screens
-  HOME: '/',
+  HOME: '/home',
   DETAILS: '/details',
   
   // Tasks management
   TASKS: '/tasks',
-  TASK_DETAIL: '/tasks/[id]',
-  CREATE_TASK: '/tasks/create',
-  EDIT_TASK: '/tasks/edit/[id]',
+  TASK_DETAIL: '/task-detail/[id]',
+  CREATE_TASK: '/task-create',
+  EDIT_TASK: '/task-edit/[id]',
 } as const;
 
 /**
@@ -30,7 +30,13 @@ export const ScreenTitles = {
  * Helper functions for navigation
  */
 export const NavigationHelpers = {
-  getTaskDetailRoute: (id: number) => `/tasks/${id}`,
-  getEditTaskRoute: (id: number) => `/tasks/edit/${id}`,
+  getTaskDetailRoute: (id: number) => `/task-detail/${id}`,
+  getEditTaskRoute: (id: number) => `/task-edit/${id}`,
   getDetailsRoute: (name: string) => ({ pathname: AppRoutes.DETAILS as any, params: { name } }),
+  
+  // Direct route getters
+  getHomeRoute: () => AppRoutes.HOME,
+  getTasksRoute: () => AppRoutes.TASKS,
+  getCreateTaskRoute: () => AppRoutes.CREATE_TASK,
+  getDetailsRoute: () => AppRoutes.DETAILS,
 } as const;
