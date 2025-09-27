@@ -4,9 +4,10 @@ import { Text, View, TextInput, Alert, ScrollView, TouchableOpacity } from 'reac
 
 import { Container } from '@/components/Container';
 import { ScreenTitles } from '@/constants/navigation';
-import { createTask } from '@/queries/tasks';
-import { getAllLists, createList } from '@/queries/lists';
+import { useTaskStore } from '@/store/taskStore';
+import { useListStore } from '@/store/listStore';
 import { Button } from '@/components/Button';
+import { TaskFormSchema, safeValidateTaskForm, type TaskFormData } from '@/schemas/taskSchema';
 
 interface SubTask {
   id: string;
@@ -25,22 +26,33 @@ export default function CreateTaskScreen() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
-  const [loading, setLoading] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState(TASK_ICONS[0]);
 
   const [subTasks, setSubTasks] = useState<SubTask[]>([]);
   const [newSubTaskText, setNewSubTaskText] = useState('');
+  
+  // Validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { createTask, loading } = useTaskStore();
+  const { getDefaultList, createList, fetchLists } = useListStore();
 
   const getOrCreateDefaultList = async () => {
     try {
-      const lists = await getAllLists();
-      if (lists.length > 0) {
-        return lists[0].id;
+      // First try to get existing lists
+      await fetchLists();
+      const defaultList = getDefaultList();
+      
+      if (defaultList) {
+        return defaultList.id;
       }
 
+      // If no lists exist, create a default one
       await createList('📝 My Tasks');
-      const newLists = await getAllLists();
-      return newLists[0].id;
+      await fetchLists(); // Refresh lists after creation
+      const newDefaultList = getDefaultList();
+      
+      return newDefaultList?.id;
     } catch (error) {
       console.error('Error with default list:', error);
       throw error;
@@ -49,6 +61,12 @@ export default function CreateTaskScreen() {
 
   const addSubTask = () => {
     if (!newSubTaskText.trim()) return;
+
+    // Validate subtask text
+    if (newSubTaskText.trim().length > 100) {
+      Alert.alert('Error', 'Subtask text must be less than 100 characters');
+      return;
+    }
 
     const newSubTask: SubTask = {
       id: Date.now().toString(),
@@ -71,15 +89,46 @@ export default function CreateTaskScreen() {
   };
 
   const handleCreateTask = async () => {
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a task name');
+    // Clear previous errors
+    setErrors({});
+
+    // Prepare form data for validation
+    const formData: TaskFormData = {
+      name: name.trim(),
+      description: description.trim(),
+      priority,
+      selectedIcon,
+      subTasks,
+    };
+
+    // Validate form data
+    const validation = safeValidateTaskForm(formData);
+    
+    if (!validation.success) {
+      // Handle validation errors
+      const fieldErrors: Record<string, string> = {};
+      validation.error.issues.forEach((issue) => {
+        if (issue.path.length > 0) {
+          fieldErrors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+      
+      // Show first error
+      const firstError = validation.error.issues[0];
+      if (firstError) {
+        Alert.alert('Validation Error', firstError.message);
+      }
       return;
     }
 
     try {
-      setLoading(true);
-
       const defaultListId = await getOrCreateDefaultList();
+
+      if (!defaultListId) {
+        Alert.alert('Error', 'Could not create or find default list');
+        return;
+      }
 
       let fullDescription = description.trim();
       if (subTasks.length > 0) {
@@ -97,14 +146,13 @@ export default function CreateTaskScreen() {
         priority,
         list_id: defaultListId,
       });
+      
       Alert.alert('Success', 'Task created successfully!', [
         { text: 'OK', onPress: () => router.back() }
       ]);
     } catch (error) {
       console.error('Error creating task:', error);
       Alert.alert('Error', 'Failed to create task. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -167,28 +215,46 @@ export default function CreateTaskScreen() {
 
           <View className="mb-6">
             <Text className="text-lg font-semibold text-gray-900 mb-3">Task Name *</Text>
-            <View className="bg-glass-card rounded-2xl border border-gray-100 p-4">
+            <View className={`bg-glass-card rounded-2xl border p-4 ${errors.name ? 'border-red-300' : 'border-gray-100'}`}>
               <TextInput
                 value={name}
-                onChangeText={setName}
+                onChangeText={(text) => {
+                  setName(text);
+                  // Clear error when user starts typing
+                  if (errors.name) {
+                    setErrors(prev => ({ ...prev, name: '' }));
+                  }
+                }}
                 placeholder="e.g., Complete project proposal, Buy groceries..."
                 className="text-gray-900 text-base"
                 maxLength={200}
-                autoFocus
                 placeholderTextColor="#9ca3af"
               />
             </View>
-            <Text className="text-sm text-gray-500 mt-2 ml-1">
-              {name.length}/200 characters
-            </Text>
+            <View className="flex-row justify-between items-center mt-2">
+              <Text className="text-sm text-gray-500 ml-1">
+                {name.length}/200 characters
+              </Text>
+              {errors.name && (
+                <Text className="text-sm text-red-500 mr-1">
+                  {errors.name}
+                </Text>
+              )}
+            </View>
           </View>
 
           <View className="mb-6">
             <Text className="text-lg font-semibold text-gray-900 mb-3">Description (Optional)</Text>
-            <View className="bg-glass-card rounded-2xl border border-gray-100 p-4">
+            <View className={`bg-glass-card rounded-2xl border p-4 ${errors.description ? 'border-red-300' : 'border-gray-100'}`}>
               <TextInput
                 value={description}
-                onChangeText={setDescription}
+                onChangeText={(text) => {
+                  setDescription(text);
+                  // Clear error when user starts typing
+                  if (errors.description) {
+                    setErrors(prev => ({ ...prev, description: '' }));
+                  }
+                }}
                 placeholder="Add more details about this task..."
                 className="text-gray-900 text-base"
                 multiline
@@ -197,9 +263,16 @@ export default function CreateTaskScreen() {
                 placeholderTextColor="#9ca3af"
               />
             </View>
-            <Text className="text-sm text-gray-500 mt-2 ml-1">
-              {description.length}/300 characters
-            </Text>
+            <View className="flex-row justify-between items-center mt-2">
+              <Text className="text-sm text-gray-500 ml-1">
+                {description.length}/300 characters
+              </Text>
+              {errors.description && (
+                <Text className="text-sm text-red-500 mr-1">
+                  {errors.description}
+                </Text>
+              )}
+            </View>
           </View>
 
           <View className="mb-6">

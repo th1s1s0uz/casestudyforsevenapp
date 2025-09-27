@@ -37,7 +37,6 @@ export const FilterSection: React.FC<FilterSectionProps> = React.memo(({
 
   return (
     <View>
-      {/* Priority Filter */}
       <View className="mb-4">
         <Text className="text-gray-700 font-semibold mb-3">Priority Filter</Text>
         <ScrollView 
@@ -66,7 +65,6 @@ export const FilterSection: React.FC<FilterSectionProps> = React.memo(({
         </ScrollView>
       </View>
 
-      {/* Status Filter */}
       <View className="mb-6">
         <Text className="text-gray-700 font-semibold mb-3">Status Filter</Text>
         <ScrollView 

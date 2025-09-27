@@ -1,53 +1,36 @@
 import { Stack, Link, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Text, View, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 
 import { Container } from '@/components/Container';
 import {  ScreenTitles, NavigationHelpers } from '@/constants/navigation';
-import { getAllTasks } from '@/queries/tasks';
-import { Task } from '@/types';
+import { useTaskStore } from '@/store/taskStore';
 
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const { 
+    tasks, 
+    loading, 
+    refreshing, 
+    fetchTasks, 
+    refreshTasks, 
+    getRecentTasks 
+  } = useTaskStore();
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [])
+      if (tasks.length === 0) {
+        fetchTasks();
+      }
+    }, [tasks.length, fetchTasks])
   );
 
-  const loadData = async () => {
-    try {
-      const tasksData = await getAllTasks();
-      // Sort tasks by created_at date (newest first)
-      const sortedTasks = tasksData.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      setTasks(sortedTasks);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    }
-  };
-
-  const onRefresh = async () => {
-    try {
-      setRefreshing(true);
-      const tasksData = await getAllTasks();
-      // Sort tasks by created_at date (newest first)
-      const sortedTasks = tasksData.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      setTasks(sortedTasks);
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  const onRefresh = useCallback(async () => {
+    await refreshTasks();
+  }, [refreshTasks]);
 
   const completedTasks = tasks.filter(task => task.is_completed).length;
   const pendingTasks = tasks.length - completedTasks;
+  const recentTasks = getRecentTasks(3);
 
   const parseTaskName = (name: string) => {
     const emojiMatch = name.match(/^(\p{Emoji})\s+(.+)$/u);
@@ -190,12 +173,12 @@ export default function Home() {
             </View>
           </View>
 
-          {tasks.length > 0 && (
+          {recentTasks.length > 0 && (
             <View className="mb-6">
               <Text className="mb-3 text-lg font-semibold text-gray-900">
                 Recent Tasks
               </Text>
-              {tasks.slice(0, 3).map((task) => {
+              {recentTasks.map((task) => {
                 const { icon, name } = parseTaskName(task.name);
                 return (
                   <Link href={NavigationHelpers.getTaskDetailRoute(task.id) as any} asChild>
@@ -232,7 +215,7 @@ export default function Home() {
             </View>
           )}
 
-          {tasks.length === 0 && (
+          {recentTasks.length === 0 && (
             <View className="p-6 items-center rounded-2xl bg-glass-card">
               <Text className="mb-3 text-6xl">
                 🚀

@@ -5,7 +5,8 @@ import { Text, View, ActivityIndicator, ScrollView, TouchableOpacity, Alert } fr
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import { ScreenTitles } from '@/constants/navigation';
-import { getTaskById, updateTask, toggleTaskCompletion, deleteTask } from '@/queries/tasks';
+import { getTaskById, toggleTaskCompletion, deleteTask } from '@/queries/tasks';
+import { useTaskStore } from '@/store/taskStore';
 import { Task } from '@/types';
 
 interface ChecklistItem {
@@ -24,6 +25,8 @@ export default function TaskDetailScreen() {
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [originalChecklistItems, setOriginalChecklistItems] = useState<ChecklistItem[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const { updateTask, updateTaskOptimistic, toggleTaskCompletion: storeToggleCompletion, deleteTask: storeDeleteTask } = useTaskStore();
 
   useEffect(() => {
     loadTask();
@@ -67,14 +70,21 @@ export default function TaskDetailScreen() {
     const items = checklistText
       .split('\n')
       .filter(line => line.trim().startsWith('•'))
-      .map((line, index) => ({
-        id: index.toString(),
-        text: line.replace('• ', '').trim(),
-        completed: false
-      }));
+      .map((line, index) => {
+        const text = line.replace('• ', '').trim();
+        // Check if item is marked as completed (starts with ✓ or contains [x])
+        const isCompleted = text.startsWith('✓ ') || text.includes('[x]') || text.includes('[X]');
+        const cleanText = text.replace(/^✓ /, '').replace(/\[x\]/gi, '').trim();
+        
+        return {
+          id: index.toString(),
+          text: cleanText,
+          completed: isCompleted
+        };
+      });
 
     setChecklistItems(items);
-    setOriginalChecklistItems([...items]); // Store original state
+    setOriginalChecklistItems([...items]); 
     setHasUnsavedChanges(false);
   };
 
@@ -109,14 +119,21 @@ export default function TaskDetailScreen() {
       setUpdating(true);
 
       const baseDescription = task.description?.replace(/\n\n📋 Checklist:\n(?:• .+\n?)*/g, '').trim() || '';
-      const checklistText = checklistItems.map(item => `• ${item.text}`).join('\n');
+      const checklistText = checklistItems.map(item => 
+        `• ${item.completed ? '✓ ' : ''}${item.text}`
+      ).join('\n');
       const newDescription = baseDescription
         ? `${baseDescription}\n\n📋 Checklist:\n${checklistText}`
         : `📋 Checklist:\n${checklistText}`;
 
+      // Use store's updateTask method
       await updateTask(task.id, { description: newDescription });
 
+      // Update local state
       setTask(prev => prev ? { ...prev, description: newDescription } : null);
+      
+      // Update store state optimistically
+      updateTaskOptimistic(task.id, { description: newDescription });
 
       setOriginalChecklistItems([...checklistItems]);
       setHasUnsavedChanges(false);
@@ -158,14 +175,19 @@ export default function TaskDetailScreen() {
       setUpdating(true);
       const newStatus = !task.is_completed;
 
+      // Optimistic update
       setTask(prev => prev ? { ...prev, is_completed: newStatus } : null);
+      storeToggleCompletion(task.id);
 
+      // Update in database
       await toggleTaskCompletion(task.id, newStatus);
 
     } catch (error) {
       console.error('Error toggling task:', error);
       Alert.alert('Error', 'Failed to update task status.');
-      loadTask();
+      // Revert optimistic update on error
+      setTask(prev => prev ? { ...prev, is_completed: task.is_completed } : null);
+      storeToggleCompletion(task.id);
     } finally {
       setUpdating(false);
     }
@@ -185,7 +207,8 @@ export default function TaskDetailScreen() {
           onPress: async () => {
             try {
               setUpdating(true);
-              await deleteTask(task.id);
+              // Use store's deleteTask method
+              await storeDeleteTask(task.id);
               Alert.alert('Success', 'Task deleted successfully!', [
                 { text: 'OK', onPress: () => router.back() }
               ]);
@@ -363,7 +386,7 @@ export default function TaskDetailScreen() {
                 <View className="gap-4">
                   <Button
                     title={task.is_completed ? "Mark as Pending" : "Mark as Completed"}
-                    variant={task.is_completed ? "secondary" : "primary"}
+                    variant={"primary"}
                     onPress={handleToggleTaskCompletion}
                     disabled={updating}
                   />
