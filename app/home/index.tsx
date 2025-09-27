@@ -206,6 +206,7 @@ export default function Home() {
                           {task.is_completed ? 'Completed' : 'Pending'}
                         </Text>
                       </View>
+                      <Text className="text-sm text-primary-600">click to view details</Text>
                     </View>
                     </TouchableOpacity>
                   </Link>
