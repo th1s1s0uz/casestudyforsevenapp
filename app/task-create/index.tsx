@@ -39,7 +39,6 @@ export default function CreateTaskScreen() {
 
   const getOrCreateDefaultList = async () => {
     try {
-      // First try to get existing lists
       await fetchLists();
       const defaultList = getDefaultList();
       
@@ -47,9 +46,8 @@ export default function CreateTaskScreen() {
         return defaultList.id;
       }
 
-      // If no lists exist, create a default one
       await createList('📝 My Tasks');
-      await fetchLists(); // Refresh lists after creation
+      await fetchLists();
       const newDefaultList = getDefaultList();
       
       return newDefaultList?.id;
@@ -62,7 +60,6 @@ export default function CreateTaskScreen() {
   const addSubTask = () => {
     if (!newSubTaskText.trim()) return;
 
-    // Validate subtask text
     if (newSubTaskText.trim().length > 100) {
       Alert.alert('Error', 'Subtask text must be less than 100 characters');
       return;
@@ -89,10 +86,8 @@ export default function CreateTaskScreen() {
   };
 
   const handleCreateTask = async () => {
-    // Clear previous errors
     setErrors({});
 
-    // Prepare form data for validation
     const formData: TaskFormData = {
       name: name.trim(),
       description: description.trim(),
@@ -101,11 +96,9 @@ export default function CreateTaskScreen() {
       subTasks,
     };
 
-    // Validate form data
     const validation = safeValidateTaskForm(formData);
     
     if (!validation.success) {
-      // Handle validation errors
       const fieldErrors: Record<string, string> = {};
       validation.error.issues.forEach((issue) => {
         if (issue.path.length > 0) {
@@ -114,7 +107,6 @@ export default function CreateTaskScreen() {
       });
       setErrors(fieldErrors);
       
-      // Show first error
       const firstError = validation.error.issues[0];
       if (firstError) {
         Alert.alert('Validation Error', firstError.message);
@@ -220,13 +212,12 @@ export default function CreateTaskScreen() {
                 value={name}
                 onChangeText={(text) => {
                   setName(text);
-                  // Clear error when user starts typing
                   if (errors.name) {
                     setErrors(prev => ({ ...prev, name: '' }));
                   }
                 }}
                 placeholder="e.g., Complete project proposal, Buy groceries..."
-                className="text-gray-900 text-base"
+                className="text-gray-900 text-start"
                 maxLength={200}
                 placeholderTextColor="#9ca3af"
               />
@@ -250,13 +241,12 @@ export default function CreateTaskScreen() {
                 value={description}
                 onChangeText={(text) => {
                   setDescription(text);
-                  // Clear error when user starts typing
                   if (errors.description) {
                     setErrors(prev => ({ ...prev, description: '' }));
                   }
                 }}
                 placeholder="Add more details about this task..."
-                className="text-gray-900 text-base"
+                className="text-gray-900 text-start"
                 multiline
                 numberOfLines={3}
                 maxLength={300}
@@ -303,10 +293,11 @@ export default function CreateTaskScreen() {
                   value={newSubTaskText}
                   onChangeText={setNewSubTaskText}
                   placeholder="Add a step or checklist item..."
-                  className="text-gray-900 text-base"
+                  className="text-gray-900 text-start"
                   maxLength={100}
-                  onSubmitEditing={addSubTask}
-                  returnKeyType="done"
+                  multiline
+                  numberOfLines={2}
+                  returnKeyType="default"
                   placeholderTextColor="#9ca3af"
                 />
               </View>
@@ -315,7 +306,7 @@ export default function CreateTaskScreen() {
                 variant="primary"
                 onPress={addSubTask}
                 disabled={!newSubTaskText.trim()}
-                className={`px-6 ${!newSubTaskText.trim() ? 'bg-gray-300 border-gray-300' : ''}`}
+                className={`px-6 max-h-16 ${!newSubTaskText.trim() ? 'bg-gray-300 border-gray-300' : ''}`}
               />
             </View>
 

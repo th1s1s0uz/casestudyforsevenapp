@@ -181,9 +181,8 @@ export default function Home() {
               {recentTasks.map((task) => {
                 const { icon, name } = parseTaskName(task.name);
                 return (
-                  <Link href={NavigationHelpers.getTaskDetailRoute(task.id) as any} asChild>
+                  <Link key={task.id} href={NavigationHelpers.getTaskDetailRoute(task.id) as any} asChild>
                     <TouchableOpacity
-                      key={task.id}
                       className={`p-4 mb-2 rounded-2xl border ${
                         task.priority === 'high' 
                           ? 'bg-accent-red-50 border-accent-red-200' 

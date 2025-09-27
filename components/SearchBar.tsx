@@ -43,14 +43,14 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({
         onChangeText={handleTextChange}
         placeholder={placeholder}
         placeholderTextColor="#9ca3af"
-        className="flex-1 ml-3 text-gray-900 text-base"
+        className="flex-1 ml-3 text-gray-900 text-start"
         autoCapitalize="none"
         autoCorrect={false}
       />
       {internalValue.length > 0 && onClear && (
         <TouchableOpacity
           onPress={handleClear}
-          className="ml-2 p-1"
+          className="ml-2"
           activeOpacity={0.7}
         >
           <Ionicons name="close-circle" size={20} color="#6b7280" />
