@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, FlatList, TextInput } from 'react-native';
-import { useLists } from '@/hooks/useLists';
 import { useListStore } from '@/store/listStore';
 
 interface ListPickerProps {
@@ -16,14 +15,13 @@ export const ListPicker: React.FC<ListPickerProps> = ({
   placeholder = "Select a list",
   className = ""
 }) => {
-  const { lists, loading, loadLists } = useLists();
-  const { createList } = useListStore();
+  const { lists, loading, fetchLists, createList } = useListStore();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newListName, setNewListName] = useState('');
 
   useEffect(() => {
     if (lists.length === 0) {
-      loadLists();
+      fetchLists();
     }
   }, []);
 
@@ -31,8 +29,17 @@ export const ListPicker: React.FC<ListPickerProps> = ({
 
   const handleCreateList = async () => {
     if (newListName.trim()) {
-      await createList(newListName.trim());
-      setNewListName('');
+      try {
+        const newList = await createList(newListName.trim());
+        setNewListName('');
+        
+        if (newList) {
+          onListSelect(newList.id);
+          setIsModalVisible(false);
+        }
+      } catch (error) {
+        console.error('Error creating list:', error);
+      }
     }
   };
 

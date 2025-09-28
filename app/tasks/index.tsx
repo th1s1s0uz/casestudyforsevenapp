@@ -39,7 +39,7 @@ export default function TasksScreen() {
     } catch (error) {
             } finally {
               setDeleting(null);
-    }
+            }
   }, [deleteTaskById]);
 
   const handleSearchChange = useCallback((text: string) => {
@@ -72,8 +72,8 @@ export default function TasksScreen() {
             placeholder="Search tasks..."
             onClear={handleSearchClear}
           />
-        </View>
-
+                  </View>
+                  
         <FilterSection
           filterPriority={filterPriority}
           filterStatus={filterStatus}
@@ -90,7 +90,7 @@ export default function TasksScreen() {
               <View className="p-4 bg-secondary-400 rounded-2xl flex-row items-center justify-center">
                 <Text className="text-white text-lg font-semibold">Create New Task</Text>
               </View>
-            </TouchableOpacity>
+          </TouchableOpacity>
           </Link>
         </View>
       </View>

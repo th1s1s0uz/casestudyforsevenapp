@@ -8,7 +8,7 @@ interface ListStore {
   error: string | null;
 
   fetchLists: () => Promise<void>;
-  createList: (name: string) => Promise<void>;
+  createList: (name: string) => Promise<List | null>;
   updateList: (id: number, name: string) => Promise<void>;
   deleteList: (id: number) => Promise<void>;
   
@@ -42,11 +42,15 @@ export const useListStore = create<ListStore>((set, get) => ({
       await createList(name);
       // Refresh lists after creation
       await get().fetchLists();
+      // Return the newly created list
+      const newList = get().lists.find(list => list.name === name);
+      return newList || null;
     } catch (error) {
       console.error('Error creating list:', error);
       set({ 
         error: error instanceof Error ? error.message : 'Failed to create list'
       });
+      return null;
     }
   },
 
