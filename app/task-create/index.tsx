@@ -92,6 +92,7 @@ export default function CreateTaskScreen() {
 
     if (!selectedListId) {
       setErrors({ list: 'Please select a list' });
+      Alert.alert('Validation Error', 'Please select a list for this task.');
       return;
     }
 

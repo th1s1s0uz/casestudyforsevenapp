@@ -47,12 +47,10 @@ export const ListPicker: React.FC<ListPickerProps> = ({
       >
         <View className="flex-row items-center justify-between">
           <View className="flex-1">
-            <Text className="text-sm text-gray-500 mb-1">List</Text>
             <Text className={`text-base ${selectedList ? 'text-gray-900' : 'text-gray-400'}`}>
               {selectedList ? selectedList.name : placeholder}
             </Text>
           </View>
-          <Text className="text-gray-400 text-lg">▼</Text>
         </View>
       </TouchableOpacity>
 
