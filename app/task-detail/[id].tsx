@@ -8,6 +8,7 @@ import { ScreenTitles } from '@/constants/navigation';
 import { getTaskById, toggleTaskCompletion, deleteTask } from '@/queries/tasks';
 import { useTaskStore } from '@/store/taskStore';
 import { Task } from '@/types';
+import { parseTaskName, parseDetailedChecklistFromDescription, removeChecklistFromDescription, createFullDescription } from '@/utils/taskUtils';
 
 interface ChecklistItem {
   id: string;
@@ -53,55 +54,10 @@ export default function TaskDetailScreen() {
   };
 
   const parseChecklistFromDescription = (description: string | null) => {
-    if (!description) {
-      setChecklistItems([]);
-      setOriginalChecklistItems([]);
-      return;
-    }
-    const allChecklistMatches = description.match(/📋 Checklist:\n((?:• .+(?:\n|$))*)/g);
-    
-    if (!allChecklistMatches || allChecklistMatches.length === 0) {
-      setChecklistItems([]);
-      setOriginalChecklistItems([]);
-      return;
-    }
-
-
-    const lastChecklistMatch = allChecklistMatches[allChecklistMatches.length - 1];
-    const checklistText = lastChecklistMatch.replace('📋 Checklist:\n', '');
-    
-    const items = checklistText
-      .split('\n')
-      .filter(line => line.trim().startsWith('•'))
-      .map((line, index) => {
-        const text = line.replace('• ', '').trim();
-        const isCompleted = text.startsWith('✓ ') || text.includes('[x]') || text.includes('[X]');
-        const cleanText = text.replace(/^✓ /, '').replace(/\[x\]/gi, '').trim();
-        
-        return {
-          id: index.toString(),
-          text: cleanText,
-          completed: isCompleted
-        };
-      });
-
+    const items = parseDetailedChecklistFromDescription(description);
     setChecklistItems(items);
     setOriginalChecklistItems([...items]); 
     setHasUnsavedChanges(false);
-  };
-
-  const parseTaskName = (name: string) => {
-    const emojiMatch = name.match(/^(\p{Emoji})\s+(.+)$/u);
-    if (emojiMatch) {
-      return {
-        icon: emojiMatch[1],
-        name: emojiMatch[2]
-      };
-    }
-    return {
-      icon: '📝',
-      name: name
-    };
   };
 
   const toggleChecklistItem = (itemId: string) => {
@@ -120,14 +76,9 @@ export default function TaskDetailScreen() {
     try {
       setUpdating(true);
 
-      // Remove ALL checklists from description (both with and without leading newlines)
-      const baseDescription = task.description?.replace(/(\n\n)?📋 Checklist:\n(?:• .+(?:\n|$))*/g, '').trim() || '';
-      const checklistText = checklistItems.map(item => 
-        `• ${item.completed ? '✓ ' : ''}${item.text}`
-      ).join('\n');
-      const newDescription = baseDescription
-        ? `${baseDescription}\n\n📋 Checklist:\n${checklistText}`
-        : `📋 Checklist:\n${checklistText}`;
+      // Remove ALL checklists from description and create new one
+      const baseDescription = removeChecklistFromDescription(task.description);
+      const newDescription = createFullDescription(baseDescription, checklistItems);
 
       await updateTask(task.id, { description: newDescription });
       setTask(prev => prev ? { ...prev, description: newDescription } : null);
@@ -222,7 +173,7 @@ export default function TaskDetailScreen() {
   };
 
   const { icon, name } = parseTaskName(task?.name || 'Loading...');
-  const cleanDescription = task?.description?.replace(/(\n\n)?📋 Checklist:\n(?:• .+(?:\n|$))*/g, '').trim() || '';
+  const cleanDescription = removeChecklistFromDescription(task?.description || '');
 
   return (
     <Container

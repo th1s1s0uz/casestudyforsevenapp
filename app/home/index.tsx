@@ -3,25 +3,12 @@ import { useCallback } from 'react';
 import { Text, View, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 
 import { Container } from '@/components/Container';
+import { TaskCard } from '@/components/TaskCard';
 import {  ScreenTitles, NavigationHelpers } from '@/constants/navigation';
-import { useTaskStore } from '@/store/taskStore';
+import { useTasks } from '@/hooks/useTasks';
 
 export default function Home() {
-  const { 
-    tasks, 
-    refreshing, 
-    fetchTasks, 
-    refreshTasks, 
-    getRecentTasks 
-  } = useTaskStore();
-
-  useFocusEffect(
-    useCallback(() => {
-      if (tasks.length === 0) {
-        fetchTasks();
-      }
-    }, [tasks.length, fetchTasks])
-  );
+  const { tasks, refreshing, refreshTasks } = useTasks();
 
   const onRefresh = useCallback(async () => {
     await refreshTasks();
@@ -29,21 +16,8 @@ export default function Home() {
 
   const completedTasks = tasks.filter(task => task.is_completed).length;
   const pendingTasks = tasks.length - completedTasks;
-  const recentTasks = getRecentTasks(3);
+  const recentTasks = tasks.slice(0, 3);
 
-  const parseTaskName = (name: string) => {
-    const emojiMatch = name.match(/^(\p{Emoji})\s+(.+)$/u);
-    if (emojiMatch) {
-      return {
-        icon: emojiMatch[1],
-        name: emojiMatch[2]
-      };
-    }
-    return {
-      icon: '📝',
-      name: name
-    };
-  };
 
 
   return (
@@ -177,40 +151,13 @@ export default function Home() {
               <Text className="mb-3 text-lg font-semibold text-gray-900">
                 Recent Tasks
               </Text>
-              {recentTasks.map((task) => {
-                const { icon, name } = parseTaskName(task.name);
-                return (
-                  <Link key={task.id} href={NavigationHelpers.getTaskDetailRoute(task.id) as any} asChild>
-                    <TouchableOpacity
-                      className={`p-4 mb-2 rounded-2xl border ${
-                        task.priority === 'high' 
-                          ? 'bg-accent-red-50 border-accent-red-200' 
-                          : task.priority === 'medium' 
-                            ? 'bg-accent-orange-50 border-accent-orange-200' 
-                            : 'bg-accent-green-50 border-accent-green-200'
-                      }`}
-                      activeOpacity={0.7}
-                    >
-                      <View className="flex-row items-center">
-                      <View className="w-10 h-10 items-center justify-center mr-3 bg-white rounded-xl">
-                        <Text className="text-lg">{icon}</Text>
-                      </View>
-                      <View className="flex-1">
-                        <Text 
-                          className={`font-medium ${task.is_completed ? 'line-through text-gray-400' : 'text-gray-900'}`}
-                        >
-                          {name}
-                        </Text>
-                        <Text className={`text-sm ${task.is_completed ? 'text-accent-green-700' : 'text-accent-orange-700'}`}>
-                          {task.is_completed ? 'Completed' : 'Pending'}
-                        </Text>
-                      </View>
-                      <Text className="text-sm text-primary-600">click to view details</Text>
-                    </View>
-                    </TouchableOpacity>
-                  </Link>
-                );
-              })}
+              {recentTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  variant="simple"
+                />
+              ))}
             </View>
           )}
 

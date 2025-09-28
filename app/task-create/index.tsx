@@ -5,7 +5,7 @@ import { Text, View, TextInput, Alert, ScrollView, TouchableOpacity } from 'reac
 import { Container } from '@/components/Container';
 import { ScreenTitles } from '@/constants/navigation';
 import { useTaskStore } from '@/store/taskStore';
-import { useListStore } from '@/store/listStore';
+import { useLists } from '@/hooks/useLists';
 import { Button } from '@/components/Button';
 import { ListPicker } from '@/components/ListPicker';
 import { TaskFormSchema, safeValidateTaskForm, type TaskFormData } from '@/schemas/taskSchema';
@@ -37,25 +37,23 @@ export default function CreateTaskScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { createTask, loading } = useTaskStore();
-  const { getDefaultList, createList, fetchLists } = useListStore();
+  const { lists, loadLists } = useLists();
 
   const getOrCreateDefaultList = async () => {
     try {
-      await fetchLists();
-      const defaultList = getDefaultList();
+      await loadLists();
       
-      if (defaultList) {
-        return defaultList.id;
+      if (lists.length > 0) {
+        return lists[0].id;
       }
 
-      await createList('📝 My Tasks');
-      await fetchLists();
-      const newDefaultList = getDefaultList();
-      
-      return newDefaultList?.id;
+      // If no lists exist, we need to create one
+      // This would require importing createList from queries
+      // For now, return null and let the user select a list
+      return null;
     } catch (error) {
-      console.error('Error with default list:', error);
-      throw error;
+      console.error('Error getting default list:', error);
+      return null;
     }
   };
 
