@@ -9,7 +9,6 @@ import { useTaskStore } from '@/store/taskStore';
 export default function Home() {
   const { 
     tasks, 
-    loading, 
     refreshing, 
     fetchTasks, 
     refreshTasks, 

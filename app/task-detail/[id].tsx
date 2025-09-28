@@ -58,21 +58,23 @@ export default function TaskDetailScreen() {
       setOriginalChecklistItems([]);
       return;
     }
-
-    const checklistMatch = description.match(/📋 Checklist:\n((?:• .+\n?)*)/);
-    if (!checklistMatch) {
+    const allChecklistMatches = description.match(/📋 Checklist:\n((?:• .+(?:\n|$))*)/g);
+    
+    if (!allChecklistMatches || allChecklistMatches.length === 0) {
       setChecklistItems([]);
       setOriginalChecklistItems([]);
       return;
     }
 
-    const checklistText = checklistMatch[1];
+
+    const lastChecklistMatch = allChecklistMatches[allChecklistMatches.length - 1];
+    const checklistText = lastChecklistMatch.replace('📋 Checklist:\n', '');
+    
     const items = checklistText
       .split('\n')
       .filter(line => line.trim().startsWith('•'))
       .map((line, index) => {
         const text = line.replace('• ', '').trim();
-        // Check if item is marked as completed (starts with ✓ or contains [x])
         const isCompleted = text.startsWith('✓ ') || text.includes('[x]') || text.includes('[X]');
         const cleanText = text.replace(/^✓ /, '').replace(/\[x\]/gi, '').trim();
         
@@ -118,7 +120,8 @@ export default function TaskDetailScreen() {
     try {
       setUpdating(true);
 
-      const baseDescription = task.description?.replace(/\n\n📋 Checklist:\n(?:• .+\n?)*/g, '').trim() || '';
+      // Remove ALL checklists from description (both with and without leading newlines)
+      const baseDescription = task.description?.replace(/(\n\n)?📋 Checklist:\n(?:• .+(?:\n|$))*/g, '').trim() || '';
       const checklistText = checklistItems.map(item => 
         `• ${item.completed ? '✓ ' : ''}${item.text}`
       ).join('\n');
@@ -126,18 +129,12 @@ export default function TaskDetailScreen() {
         ? `${baseDescription}\n\n📋 Checklist:\n${checklistText}`
         : `📋 Checklist:\n${checklistText}`;
 
-      // Use store's updateTask method
       await updateTask(task.id, { description: newDescription });
-
-      // Update local state
       setTask(prev => prev ? { ...prev, description: newDescription } : null);
-      
-      // Update store state optimistically
       updateTaskOptimistic(task.id, { description: newDescription });
 
       setOriginalChecklistItems([...checklistItems]);
       setHasUnsavedChanges(false);
-
       Alert.alert('Success', 'Checklist updated successfully!');
 
     } catch (error) {
@@ -225,7 +222,7 @@ export default function TaskDetailScreen() {
   };
 
   const { icon, name } = parseTaskName(task?.name || 'Loading...');
-  const cleanDescription = task?.description?.replace(/\n\n📋 Checklist:\n(?:• .+\n?)*/g, '').trim() || '';
+  const cleanDescription = task?.description?.replace(/(\n\n)?📋 Checklist:\n(?:• .+(?:\n|$))*/g, '').trim() || '';
 
   return (
     <Container
