@@ -59,7 +59,6 @@ export const useLists = (options: UseListsOptions = {}): UseListsReturn => {
     return list ? list.name : 'Unknown List';
   }, [getListById]);
 
-  // Auto-load lists when component mounts
   useFocusEffect(
     useCallback(() => {
       if (autoLoad) {

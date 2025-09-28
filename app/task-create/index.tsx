@@ -8,7 +8,7 @@ import { useTaskStore } from '@/store/taskStore';
 import { useLists } from '@/hooks/useLists';
 import { Button } from '@/components/Button';
 import { ListPicker } from '@/components/ListPicker';
-import { TaskFormSchema, safeValidateTaskForm, type TaskFormData } from '@/schemas/taskSchema';
+import { safeValidateTaskForm, type TaskFormData } from '@/schemas/taskSchema';
 
 interface SubTask {
   id: string;
@@ -33,29 +33,9 @@ export default function CreateTaskScreen() {
   const [subTasks, setSubTasks] = useState<SubTask[]>([]);
   const [newSubTaskText, setNewSubTaskText] = useState('');
   
-  // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { createTask, loading } = useTaskStore();
-  const { lists, loadLists } = useLists();
-
-  const getOrCreateDefaultList = async () => {
-    try {
-      await loadLists();
-      
-      if (lists.length > 0) {
-        return lists[0].id;
-      }
-
-      // If no lists exist, we need to create one
-      // This would require importing createList from queries
-      // For now, return null and let the user select a list
-      return null;
-    } catch (error) {
-      console.error('Error getting default list:', error);
-      return null;
-    }
-  };
 
   const addSubTask = () => {
     if (!newSubTaskText.trim()) return;

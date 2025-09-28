@@ -1,4 +1,4 @@
-import { Stack, Link, useFocusEffect } from 'expo-router';
+import { Stack, Link } from 'expo-router';
 import { useCallback } from 'react';
 import { Text, View, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 
@@ -17,8 +17,6 @@ export default function Home() {
   const completedTasks = tasks.filter(task => task.is_completed).length;
   const pendingTasks = tasks.length - completedTasks;
   const recentTasks = tasks.slice(0, 3);
-
-
 
   return (
     <Container>

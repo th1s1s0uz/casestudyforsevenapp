@@ -96,7 +96,6 @@ export const useListStore = create<ListStore>((set, get) => ({
 
   getDefaultList: () => {
     const lists = get().lists;
-    // Return first list as default, or create a default one
     return lists.length > 0 ? lists[0] : undefined;
   },
 }));

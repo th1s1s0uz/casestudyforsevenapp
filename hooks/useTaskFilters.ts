@@ -6,20 +6,17 @@ interface UseTaskFiltersOptions {
 }
 
 interface UseTaskFiltersReturn {
-  // Filter states
   searchQuery: string;
   filterPriority: 'all' | 'high' | 'medium' | 'low';
   filterStatus: 'all' | 'completed' | 'pending';
   filterList: number | 'all';
   
-  // Filter actions
   setSearchQuery: (query: string) => void;
   setFilterPriority: (priority: 'all' | 'high' | 'medium' | 'low') => void;
   setFilterStatus: (status: 'all' | 'completed' | 'pending') => void;
   setFilterList: (listId: number | 'all') => void;
   clearAllFilters: () => void;
   
-  // Filtered data
   filteredTasks: Task[];
   hasActiveFilters: boolean;
 }
@@ -37,20 +34,16 @@ export const useTaskFilters = ({ tasks }: UseTaskFiltersOptions): UseTaskFilters
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      // Search filter
       const matchesSearch = searchQuery === '' || 
         task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      // Priority filter
       const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
       
-      // Status filter
       const matchesStatus = filterStatus === 'all' || 
         (filterStatus === 'completed' && task.is_completed) ||
         (filterStatus === 'pending' && !task.is_completed);
       
-      // List filter
       const matchesList = filterList === 'all' || task.list_id === filterList;
       
       return matchesSearch && matchesPriority && matchesStatus && matchesList;
@@ -72,20 +65,17 @@ export const useTaskFilters = ({ tasks }: UseTaskFiltersOptions): UseTaskFilters
   }, []);
 
   return {
-    // Filter states
     searchQuery,
     filterPriority,
     filterStatus,
     filterList,
     
-    // Filter actions
     setSearchQuery,
     setFilterPriority,
     setFilterStatus,
     setFilterList,
     clearAllFilters,
     
-    // Filtered data
     filteredTasks,
     hasActiveFilters,
   };

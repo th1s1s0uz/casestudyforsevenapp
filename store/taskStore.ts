@@ -76,13 +76,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   updateTask: async (id, updates) => {
     try {
       set({ loading: true, error: null });
-      // Convert null values to undefined for the API
       const cleanUpdates = Object.fromEntries(
         Object.entries(updates).map(([key, value]) => [key, value === null ? undefined : value])
       );
       await updateTask(id, cleanUpdates);
       
-      // Refresh tasks after update
       const data = await getAllTasks();
       const sortedTasks = data.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

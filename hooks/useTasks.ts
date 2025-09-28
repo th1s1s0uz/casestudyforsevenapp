@@ -136,7 +136,6 @@ export const useTasks = (options: UseTasksOptions = {}): UseTasksReturn => {
     setError(null);
   }, []);
 
-  // Auto-load tasks when component mounts
   useFocusEffect(
     useCallback(() => {
       if (autoLoad) {

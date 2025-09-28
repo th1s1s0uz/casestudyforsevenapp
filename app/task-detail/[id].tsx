@@ -5,7 +5,7 @@ import { Text, View, ActivityIndicator, ScrollView, TouchableOpacity, Alert } fr
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import { ScreenTitles } from '@/constants/navigation';
-import { getTaskById, toggleTaskCompletion, deleteTask } from '@/queries/tasks';
+import { getTaskById, toggleTaskCompletion } from '@/queries/tasks';
 import { useTaskStore } from '@/store/taskStore';
 import { Task } from '@/types';
 import { parseTaskName, parseDetailedChecklistFromDescription, removeChecklistFromDescription, createFullDescription } from '@/utils/taskUtils';
@@ -76,7 +76,6 @@ export default function TaskDetailScreen() {
     try {
       setUpdating(true);
 
-      // Remove ALL checklists from description and create new one
       const baseDescription = removeChecklistFromDescription(task.description);
       const newDescription = createFullDescription(baseDescription, checklistItems);
 
@@ -123,17 +122,14 @@ export default function TaskDetailScreen() {
       setUpdating(true);
       const newStatus = !task.is_completed;
 
-      // Optimistic update
       setTask(prev => prev ? { ...prev, is_completed: newStatus } : null);
       storeToggleCompletion(task.id);
 
-      // Update in database
       await toggleTaskCompletion(task.id, newStatus);
 
     } catch (error) {
       console.error('Error toggling task:', error);
       Alert.alert('Error', 'Failed to update task status.');
-      // Revert optimistic update on error
       setTask(prev => prev ? { ...prev, is_completed: task.is_completed } : null);
       storeToggleCompletion(task.id);
     } finally {
@@ -155,7 +151,6 @@ export default function TaskDetailScreen() {
           onPress: async () => {
             try {
               setUpdating(true);
-              // Use store's deleteTask method
               await storeDeleteTask(task.id);
               Alert.alert('Success', 'Task deleted successfully!', [
                 { text: 'OK', onPress: () => router.back() }

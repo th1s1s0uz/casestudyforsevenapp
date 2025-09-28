@@ -1,7 +1,3 @@
-/**
- * Navigation routes and screen names
- * Centralized navigation constants for type-safe routing
- */
 export const AppRoutes = {
   // Main screens
   HOME: '/home',
@@ -14,9 +10,6 @@ export const AppRoutes = {
   EDIT_TASK: '/task-edit/[id]',
 } as const;
 
-/**
- * Screen titles for consistent naming
- */
 export const ScreenTitles = {
   HOME: 'Task Manager',
   DETAILS: 'Details',
@@ -26,9 +19,6 @@ export const ScreenTitles = {
   EDIT_TASK: 'Edit Task',
 } as const;
 
-/**
- * Helper functions for navigation
- */
 export const NavigationHelpers = {
   getTaskDetailRoute: (id: number) => `/task-detail/${id}`,
   getEditTaskRoute: (id: number) => `/task-edit/${id}`,
