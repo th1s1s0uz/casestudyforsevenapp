@@ -1,5 +1,5 @@
 import { Stack, Link } from 'expo-router';
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, Text, View, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 
 import { Container } from '@/components/Container';
@@ -8,13 +8,13 @@ import { FilterSection } from '@/components/FilterSection';
 import { TaskCard } from '@/components/TaskCard';
 import { ScreenTitles, NavigationHelpers } from '@/constants/navigation';
 import { Task } from '@/types';
-import { parseTaskName, parseChecklistFromDescription } from '@/utils/taskUtils';
 import { useTasks } from '@/hooks/useTasks';
 import { useLists } from '@/hooks/useLists';
 import { useTaskFilters } from '@/hooks/useTaskFilters';
 
 export default function TasksScreen() {
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [isAccordionExpanded, setIsAccordionExpanded] = useState(false);
 
   const { tasks, loading, refreshing, refreshTasks, deleteTaskById } = useTasks();
   const { lists, getListName } = useLists();
@@ -62,40 +62,44 @@ export default function TasksScreen() {
     setFilterList(listId);
   }, [setFilterList]);
 
-  const ListHeaderComponent = useMemo(() => {
-    return () => (
-      <View className="pt-6 pb-6">
-        <View className="mb-4">
-          <SearchBar
-            value={searchQuery}
-            onChangeText={handleSearchChange}
-            placeholder="Search tasks..."
-            onClear={handleSearchClear}
-          />
-                  </View>
-                  
-        <FilterSection
-          filterPriority={filterPriority}
-          filterStatus={filterStatus}
-          filterList={filterList}
-          lists={lists}
-          onPriorityFilter={handlePriorityFilter}
-          onStatusFilter={handleStatusFilter}
-          onListFilter={handleListFilter}
-        />
+  const toggleAccordion = useCallback(() => {
+    setIsAccordionExpanded(prev => !prev);
+  }, []);
 
-        <View className="mb-6">
-          <Link href={NavigationHelpers.getCreateTaskRoute()} asChild>
-            <TouchableOpacity>
-              <View className="p-4 bg-secondary-400 rounded-2xl flex-row items-center justify-center">
-                <Text className="text-white text-lg font-semibold">Create New Task</Text>
-              </View>
-          </TouchableOpacity>
-          </Link>
-        </View>
+  const ListHeaderComponent = () => (
+    <View className="pt-6 pb-6">
+      <View className="mb-4">
+        <SearchBar
+          value={searchQuery}
+          onChangeText={handleSearchChange}
+          placeholder="Search tasks..."
+          onClear={handleSearchClear}
+        />
       </View>
-    );
-  }, [filterPriority, filterStatus, filterList, lists, handleSearchChange, handleSearchClear, handlePriorityFilter, handleStatusFilter, handleListFilter]);
+              
+      <FilterSection
+        filterPriority={filterPriority}
+        filterStatus={filterStatus}
+        filterList={filterList}
+        lists={lists}
+        onPriorityFilter={handlePriorityFilter}
+        onStatusFilter={handleStatusFilter}
+        onListFilter={handleListFilter}
+        isExpanded={isAccordionExpanded}
+        onToggleAccordion={toggleAccordion}
+      />
+
+      <View>
+        <Link href={NavigationHelpers.getCreateTaskRoute()} asChild>
+          <TouchableOpacity>
+            <View className="p-4 bg-secondary-400 rounded-2xl flex-row items-center justify-center">
+              <Text className="text-white text-lg font-semibold">Create New Task</Text>
+            </View>
+          </TouchableOpacity>
+        </Link>
+      </View>
+    </View>
+  );
 
   const renderTaskItem = ({ item }: { item: Task }) => (
     <TaskCard
