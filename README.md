@@ -1,77 +1,117 @@
-# SevenApps React Native Case Study
+# Task Management App - React Native
 
-## Overview
+Modern bir görev yönetimi uygulaması. React Native, Expo, TypeScript ve NativeWind kullanılarak geliştirilmiştir.
 
-This repository contains a case study for React Native developers applying to SevenApps. The project is a task/todo management application where candidates will demonstrate their ability to handle asynchronous operations and implement proper UI components.
+## 🚀 Özellikler
 
-## What's Provided
+### ✅ Temel Özellikler
+- **Görev Yönetimi**: Görev oluşturma, düzenleme, silme ve tamamlama
+- **Liste Yönetimi**: Görevleri kategorilere ayırma
+- **Arama ve Filtreleme**: Görevleri arama ve filtreleme
+- **Gerçek Zamanlı Güncellemeler**: Anlık veri senkronizasyonu
 
-- **Database Schema** (`db/schema.ts`): Contains table definitions for tasks and lists
-- **API Queries**:
-  - `queries/tasks.ts`: Complete set of functions for task management (create, read, update, delete, search, filter)
-  - `queries/lists.ts`: Complete set of functions for list management (create, read, update, delete, search)
-- **Project Setup**: Expo-based React Native app with basic configuration
+### 🎨 UI/UX Özellikleri
+- **Modern Tasarım**: NativeWind ile responsive ve modern arayüz
+- **Animated**: Filtreleme için animasyonlu akordiyon tasarım
+- **Pull-to-Refresh**: Aşağı çekerek yenileme
+- **Loading States**: Tüm async işlemler için loading göstergeleri
+- **Error Handling**: Kullanıcı dostu hata yönetimi
 
-All API functions simulate network latency to emulate real-world scenarios, giving candidates the opportunity to implement proper loading states, error handling, and optimistic updates.
+### 🔧 Teknik Özellikler
+- **TypeScript**: Tam tip güvenliği
+- **Zod**: Runtime validation ve type safety
+- **Zustand**: Global state yönetimi
+- **Drizzle ORM**: Type-safe database işlemleri
+- **SQLite**: Yerel veritabanı
+- **Expo Router**: File-based navigation
 
-## Task Requirements
+## 📱 Ekranlar
 
-Candidates should build a functional task management application using the provided database schema and query functions. **You do not need to modify the files in `db/schema.ts`, `queries/tasks.ts`, or `queries/lists.ts`**. Instead, focus on:
+- **Ana Sayfa**: Görev özeti ve hızlı erişim
+- **Görevler**: Tüm görevlerin listesi
+- **Görev Detayı**: Görev düzenleme ve detayları
+- **Görev Oluşturma**: Yeni görev ekleme
+- **Listeler**: Kategori yönetimi
 
-1. Creating a clean, functional UI for managing tasks and lists
-2. Implementing proper async call handling:
-   - Loading states
-   - Error handling
-   - Data fetching and refreshing
-   - Optimistic updates where appropriate
-3. Creating a smooth user experience despite the simulated network delays
-
-## Evaluation Criteria
-
-We will primarily evaluate:
-
-1. **Async Operation Handling**: How you manage loading states, errors, and data refreshing
-2. **Code Organization**: Clean architecture and separation of concerns
-3. **TypeScript Usage**: Proper typing and type safety
-4. **Component Design**: Reusable and maintainable components
-
-## Bonus Points
-
-While not required, we appreciate candidates who demonstrate:
-
-- **Data Validation**: Usage of Zod or similar validation libraries
-- **Styling**: Effective use of NativeWind (provided in the project)
-- **Data Fetching**: Implementation of TanStack Query (React Query) for data management
-- **State Management**: Usage of a global state solution (Zustand is already provided)
-- **Testing**: Addition of unit and/or integration tests
-- **Error Handling**: Well-thought-out error management, fallbacks, and recovery
-- **Optimistic Updates**: Implementation of optimistic UI updates for a smoother user experience
-
-## UI Design
-
-While impressive UI design is not the primary focus of this case study, a clean and functional interface is expected. We appreciate attention to detail and thoughtful user experience design, but the main evaluation will be on your code implementation and handling of asynchronous operations.
-
-## Getting Started
+## 🛠️ Kurulum
 
 ```bash
-# Install dependencies (use your preferred package manager)
+# Bağımlılıkları yükle
 npm install
-# or
-yarn install
-# or
-pnpm install
 
-# Generate the database schema (IMPORTANT: do this before starting development)
+# Veritabanı şemasını oluştur
 npm run generate-schema
 
+# Uygulamayı başlat
+npm start
 ```
 
-Follow the Expo CLI instructions to run the app on your preferred platform (iOS, Android, or web).
+## 🏗️ Proje Yapısı
 
-## Important Note
+```
+├── app/                 # Expo Router sayfaları
+├── components/          # Yeniden kullanılabilir bileşenler
+├── hooks/              # Custom React hooks
+├── queries/            # API sorguları
+├── store/              # Zustand state yönetimi
+├── db/                 # Veritabanı şeması
+└── utils/              # Yardımcı fonksiyonlar
+```
 
-**Before starting development, you MUST run the database schema generation command** to set up the SQLite database structure:
+## 🎯 Kullanılan Teknolojiler
+
+- **React Native** - Mobil uygulama framework'ü
+- **Expo** - Geliştirme platformu
+- **TypeScript** - Tip güvenliği
+- **Zod** - Runtime validation
+- **NativeWind** - Tailwind CSS for React Native
+- **Zustand** - State yönetimi
+- **Drizzle ORM** - Veritabanı ORM
+- **SQLite** - Yerel veritabanı
+
+## 📋 Özellik Detayları
+
+### Async İşlem Yönetimi
+- Tüm API çağrıları için loading states
+- Error handling ve kullanıcı bildirimleri
+- Optimistic updates
+- Pull-to-refresh functionality
+
+### Data Validation
+- Zod ile runtime validation
+- Form input validation
+- Type-safe data parsing
+- Error message handling
+
+### State Yönetimi
+- Zustand ile global state
+- Local component state
+- Async data fetching hooks
+
+### UI/UX
+- Responsive tasarım
+- Smooth animasyonlar
+- Modern glassmorphism efektleri
+- Consistent color scheme
+
+## 🚀 Geliştirme
 
 ```bash
-npm run generate-schema
+# Development server başlat
+npm start
+
+# iOS simülatörde çalıştır
+npm run ios
+
+# Android emülatörde çalıştır
+npm run android
+
+# Web'de çalıştır
+npm run web
 ```
+
+## 📝 Notlar
+
+- Veritabanı şeması değiştirilmemelidir
+- API fonksiyonları simüle edilmiş network latency içerir
+- Tüm async işlemler proper error handling ile yönetilir
