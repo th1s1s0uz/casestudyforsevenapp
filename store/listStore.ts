@@ -3,30 +3,25 @@ import { getAllLists, createList, updateList, deleteList } from '@/queries/lists
 import { List } from '@/types';
 
 interface ListStore {
-  // State
   lists: List[];
   loading: boolean;
   error: string | null;
 
-  // Actions
   fetchLists: () => Promise<void>;
-  createList: (name: string) => Promise<List>;
+  createList: (name: string) => Promise<void>;
   updateList: (id: number, name: string) => Promise<void>;
   deleteList: (id: number) => Promise<void>;
   
-  // Utility
   clearError: () => void;
   getListById: (id: number) => List | undefined;
   getDefaultList: () => List | undefined;
 }
 
 export const useListStore = create<ListStore>((set, get) => ({
-  // Initial state
   lists: [],
   loading: false,
   error: null,
 
-  // Fetch all lists
   fetchLists: async () => {
     try {
       set({ loading: true, error: null });
@@ -41,82 +36,63 @@ export const useListStore = create<ListStore>((set, get) => ({
     }
   },
 
-  // Create new list
-  createList: async (name) => {
+  createList: async (name: string) => {
     try {
-      set({ loading: true, error: null });
+      set({ error: null });
       await createList(name);
-      
       // Refresh lists after creation
-      const data = await getAllLists();
-      set({ lists: data, loading: false });
-      
-      // Return the first list (assuming it's the one we just created)
-      return data[0];
+      await get().fetchLists();
     } catch (error) {
       console.error('Error creating list:', error);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to create list',
-        loading: false 
+        error: error instanceof Error ? error.message : 'Failed to create list'
       });
-      throw error;
     }
   },
 
-  // Update list
-  updateList: async (id, name) => {
+  updateList: async (id: number, name: string) => {
     try {
-      set({ loading: true, error: null });
+      set({ error: null });
       await updateList(id, name);
-      
-      // Refresh lists after update
-      const data = await getAllLists();
-      set({ lists: data, loading: false });
+      // Update local state
+      set(state => ({
+        lists: state.lists.map(list => 
+          list.id === id ? { ...list, name, updated_at: new Date().toISOString() } : list
+        )
+      }));
     } catch (error) {
       console.error('Error updating list:', error);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to update list',
-        loading: false 
+        error: error instanceof Error ? error.message : 'Failed to update list'
       });
-      throw error;
     }
   },
 
-  // Delete list
-  deleteList: async (id) => {
+  deleteList: async (id: number) => {
     try {
-      set({ loading: true, error: null });
+      set({ error: null });
       await deleteList(id);
-      
-      // Refresh lists after deletion
-      const data = await getAllLists();
-      set({ lists: data, loading: false });
+      // Remove from local state
+      set(state => ({
+        lists: state.lists.filter(list => list.id !== id)
+      }));
     } catch (error) {
       console.error('Error deleting list:', error);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to delete list',
-        loading: false 
+        error: error instanceof Error ? error.message : 'Failed to delete list'
       });
-      throw error;
     }
   },
 
-  // Clear error
   clearError: () => set({ error: null }),
 
-  // Get list by ID
-  getListById: (id) => {
+  getListById: (id: number) => {
     return get().lists.find(list => list.id === id);
   },
 
-  // Get default list (first list or create one)
   getDefaultList: () => {
-    const { lists } = get();
-    
-    if (lists.length > 0) {
-      return lists[0];
-    }
-
-    return undefined;
+    const lists = get().lists;
+    // Return first list as default, or create a default one
+    return lists.length > 0 ? lists[0] : undefined;
   },
 }));

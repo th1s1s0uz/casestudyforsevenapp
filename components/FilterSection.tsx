@@ -1,18 +1,29 @@
 import React, { useCallback } from 'react';
 import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
 
+interface List {
+  id: number;
+  name: string;
+}
+
 interface FilterSectionProps {
   filterPriority: 'all' | 'high' | 'medium' | 'low';
   filterStatus: 'all' | 'completed' | 'pending';
+  filterList: number | 'all';
+  lists: List[];
   onPriorityFilter: (priority: 'all' | 'high' | 'medium' | 'low') => void;
   onStatusFilter: (status: 'all' | 'completed' | 'pending') => void;
+  onListFilter: (listId: number | 'all') => void;
 }
 
 export const FilterSection: React.FC<FilterSectionProps> = React.memo(({
   filterPriority,
   filterStatus,
+  filterList,
+  lists,
   onPriorityFilter,
-  onStatusFilter
+  onStatusFilter,
+  onListFilter
 }) => {
   const priorityFilters = [
     { key: 'all', label: 'All', color: 'bg-gray-200' },
@@ -34,6 +45,10 @@ export const FilterSection: React.FC<FilterSectionProps> = React.memo(({
   const handleStatusPress = useCallback((status: 'all' | 'completed' | 'pending') => {
     onStatusFilter(status);
   }, [onStatusFilter]);
+
+  const handleListPress = useCallback((listId: number | 'all') => {
+    onListFilter(listId);
+  }, [onListFilter]);
 
   return (
     <View>
@@ -87,6 +102,48 @@ export const FilterSection: React.FC<FilterSectionProps> = React.memo(({
                 filterStatus === filter.key ? 'text-primary-900' : 'text-gray-600'
               }`}>
                 {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-gray-700 font-semibold mb-3">List Filter</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 2 }}
+          className="flex-row"
+        >
+          <TouchableOpacity
+            onPress={() => handleListPress('all')}
+            className={`px-4 py-2 rounded-xl border mr-2 ${
+              filterList === 'all' 
+                ? 'bg-primary-100 border-primary-300' 
+                : 'bg-white border-gray-200'
+            }`}
+          >
+            <Text className={`text-sm font-medium ${
+              filterList === 'all' ? 'text-primary-900' : 'text-gray-600'
+            }`}>
+              All Lists
+            </Text>
+          </TouchableOpacity>
+          {lists.map((list) => (
+            <TouchableOpacity
+              key={list.id}
+              onPress={() => handleListPress(list.id)}
+              className={`px-4 py-2 rounded-xl border mr-2 ${
+                filterList === list.id 
+                  ? 'bg-primary-100 border-primary-300' 
+                  : 'bg-white border-gray-200'
+              }`}
+            >
+              <Text className={`text-sm font-medium ${
+                filterList === list.id ? 'text-primary-900' : 'text-gray-600'
+              }`}>
+                {list.name}
               </Text>
             </TouchableOpacity>
           ))}

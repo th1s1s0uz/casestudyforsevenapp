@@ -7,6 +7,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { FilterSection } from '@/components/FilterSection';
 import { ScreenTitles, NavigationHelpers } from '@/constants/navigation';
 import { getAllTasks, deleteTask } from '@/queries/tasks';
+import { useListStore } from '@/store/listStore';
 import { Task } from '@/types';
 
 export default function TasksScreen() {
@@ -17,10 +18,14 @@ export default function TasksScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'pending'>('all');
+  const [filterList, setFilterList] = useState<number | 'all'>('all');
+
+  const { lists, fetchLists } = useListStore();
 
   useFocusEffect(
     useCallback(() => {
       loadTasks();
+      fetchLists();
     }, [])
   );
 
@@ -116,27 +121,29 @@ export default function TasksScreen() {
     };
   };
 
-  // Filtered tasks based on search and filters
+  const getListName = (listId: number) => {
+    const list = lists.find(l => l.id === listId);
+    return list ? list.name : 'Unknown List';
+  };
+
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      // Search filter
       const matchesSearch = searchQuery === '' || 
         task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      // Priority filter
       const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
       
-      // Status filter
       const matchesStatus = filterStatus === 'all' || 
         (filterStatus === 'completed' && task.is_completed) ||
         (filterStatus === 'pending' && !task.is_completed);
       
-      return matchesSearch && matchesPriority && matchesStatus;
+      const matchesList = filterList === 'all' || task.list_id === filterList;
+      
+      return matchesSearch && matchesPriority && matchesStatus && matchesList;
     });
-  }, [tasks, searchQuery, filterPriority, filterStatus]);
+  }, [tasks, searchQuery, filterPriority, filterStatus, filterList]);
 
-  // Memoized callback functions to prevent SearchBar re-renders
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
   }, []);
@@ -153,13 +160,17 @@ export default function TasksScreen() {
     setFilterStatus(status);
   }, []);
 
+  const handleListFilter = useCallback((listId: number | 'all') => {
+    setFilterList(listId);
+  }, []);
+
   const handleClearAllFilters = useCallback(() => {
     setSearchQuery('');
     setFilterPriority('all');
     setFilterStatus('all');
+    setFilterList('all');
   }, []);
 
-  // Memoized ListHeaderComponent to prevent SearchBar re-renders
   const ListHeaderComponent = useMemo(() => {
     return () => (
       <View className="pt-6 pb-6">
@@ -173,15 +184,16 @@ export default function TasksScreen() {
           />
         </View>
 
-        {/* Filter Section */}
         <FilterSection
           filterPriority={filterPriority}
           filterStatus={filterStatus}
+          filterList={filterList}
+          lists={lists}
           onPriorityFilter={handlePriorityFilter}
           onStatusFilter={handleStatusFilter}
+          onListFilter={handleListFilter}
         />
 
-        {/* Create Task Button */}
         <View className="mb-6">
           <Link href={NavigationHelpers.getCreateTaskRoute()} asChild>
             <TouchableOpacity>
@@ -193,7 +205,7 @@ export default function TasksScreen() {
         </View>
       </View>
     );
-  }, [filterPriority, filterStatus, handleSearchChange, handleSearchClear, handlePriorityFilter, handleStatusFilter]);
+  }, [filterPriority, filterStatus, filterList, lists, handleSearchChange, handleSearchClear, handlePriorityFilter, handleStatusFilter, handleListFilter]);
 
   const renderTaskItem = ({ item }: { item: Task }) => {
     const { description, checklist } = parseChecklistFromDescription(item.description);
@@ -245,6 +257,12 @@ export default function TasksScreen() {
                       </Text>
                     </View>
                   )}
+                  
+                  <View className="bg-gray-100 px-2 py-1 rounded-lg">
+                    <Text className="text-xs font-medium text-gray-700">
+                      📁 {getListName(item.list_id)}
+                    </Text>
+                  </View>
                   
                   <View className={`px-2 py-1 rounded-lg ${
                     item.is_completed ? 'bg-accent-green-100' : 'bg-accent-orange-100'

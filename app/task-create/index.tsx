@@ -7,6 +7,7 @@ import { ScreenTitles } from '@/constants/navigation';
 import { useTaskStore } from '@/store/taskStore';
 import { useListStore } from '@/store/listStore';
 import { Button } from '@/components/Button';
+import { ListPicker } from '@/components/ListPicker';
 import { TaskFormSchema, safeValidateTaskForm, type TaskFormData } from '@/schemas/taskSchema';
 
 interface SubTask {
@@ -27,6 +28,7 @@ export default function CreateTaskScreen() {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [selectedIcon, setSelectedIcon] = useState(TASK_ICONS[0]);
+  const [selectedListId, setSelectedListId] = useState<number | null>(null);
 
   const [subTasks, setSubTasks] = useState<SubTask[]>([]);
   const [newSubTaskText, setNewSubTaskText] = useState('');
@@ -88,6 +90,11 @@ export default function CreateTaskScreen() {
   const handleCreateTask = async () => {
     setErrors({});
 
+    if (!selectedListId) {
+      setErrors({ list: 'Please select a list' });
+      return;
+    }
+
     const formData: TaskFormData = {
       name: name.trim(),
       description: description.trim(),
@@ -115,12 +122,6 @@ export default function CreateTaskScreen() {
     }
 
     try {
-      const defaultListId = await getOrCreateDefaultList();
-
-      if (!defaultListId) {
-        Alert.alert('Error', 'Could not create or find default list');
-        return;
-      }
 
       let fullDescription = description.trim();
       if (subTasks.length > 0) {
@@ -136,7 +137,7 @@ export default function CreateTaskScreen() {
         name: formattedName,
         description: fullDescription || undefined,
         priority,
-        list_id: defaultListId,
+        list_id: selectedListId,
       });
       
       Alert.alert('Success', 'Task created successfully!', [
@@ -232,6 +233,18 @@ export default function CreateTaskScreen() {
                 </Text>
               )}
             </View>
+          </View>
+
+          <View className="mb-6">
+            <Text className="text-lg font-semibold text-gray-900 mb-3">List *</Text>
+            <ListPicker
+              selectedListId={selectedListId}
+              onListSelect={setSelectedListId}
+              placeholder="Select a list for this task"
+            />
+            {errors.list && (
+              <Text className="text-sm text-red-500 ml-1 mt-1">{errors.list}</Text>
+            )}
           </View>
 
           <View className="mb-6">
